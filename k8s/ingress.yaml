@@ -1,0 +1,51 @@
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: elasticsearch-ingress
+  namespace: elasticsearch
+  
+  labels:
+    app: elasticsearch
+    component: ingress
+  
+  annotations:
+   
+    kubernetes.io/ingress.class: "nginx"
+    
+   
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    
+
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    
+
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+spec:
+
+  ingressClassName: nginx
+  
+  rules:
+    - host: localhost
+      http:
+        paths:
+          # Route all paths to Elasticsearch
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: es-discovery
+                port:
+                  number: 9200
+
+# ============================================================================
+

@@ -1,0 +1,103 @@
+# ============================================================================
+# POD DISRUPTION BUDGET (PDB)
+# ============================================================================
+# Purpose:     Guarantee high availability during Kubernetes maintenance
+# Availability: Minimum 2 out of 3 pods must remain running
+# ============================================================================
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+
+metadata:
+  name: elasticsearch-pdb
+  namespace: elasticsearch
+  
+  labels:
+    app: elasticsearch
+    component: availability
+
+spec:
+  # AVAILABILITY GUARANTEE
+  # At least 2 out of 3 pods must remain available
+  # This maintains the 2/3 quorum Elasticsearch needs for consensus
+  minAvailable: 2
+  
+  # SELECT PODS
+  # Apply this PDB to all pods labeled app=elasticsearch
+  selector:
+    matchLabels:
+      app: elasticsearch
+
+# ============================================================================
+# WHAT THIS DOES
+# ============================================================================
+# When K8s needs to evict pods (during maintenance, updates, etc.):
+#   - Check: Can we evict a pod?
+#   - K8s calculates: 3 pods - 1 pod to evict = 2 pods remaining
+#   - Question: Does 2 >= minAvailable (2)? YES
+#   - Action: Pod CAN be evicted
+#
+#   - Check: Can we evict another pod?
+#   - K8s calculates: 2 pods - 1 pod to evict = 1 pod remaining
+#   - Question: Does 1 >= minAvailable (2)? NO
+#   - Action: Pod CANNOT be evicted (would violate PDB)
+#   - Result: Maintenance delayed until first pod restarts
+#
+# ============================================================================
+# WHY THIS MATTERS
+# ============================================================================
+# Without PDB:
+#   - K8s could evict all 3 Elasticsearch pods simultaneously
+#   - No pods running = complete cluster outage
+#   - Unacceptable for production
+#
+# With PDB (minAvailable: 2):
+#   - Always 2+ pods running
+#   - 2/3 quorum maintained
+#   - Cluster stays online and functional
+#   - Maintenance delayed if necessary (acceptable trade-off)
+#
+# ============================================================================
+# ALTERNATIVE CONFIGURATIONS
+# ============================================================================
+# Option 1: minAvailable: 1
+#   - Only 1 pod must stay running
+#   - Less protection, faster maintenance
+#   - Risky: quorum lost if 1+ more pod fails during maintenance
+#
+# Option 2: maxUnavailable: 1
+#   - Maximum 1 pod can be down (same as minAvailable: 2)
+#   - Alternative way to express same constraint
+#   - Use minAvailable: 2 (more intuitive)
+#
+# Option 3: minAvailable: 3
+#   - All 3 pods must always stay running
+#   - No pod evictions allowed
+#   - Maintenance must drain node, can fail
+#   - Only for ultra-critical systems
+#
+# ============================================================================
+# SCALING IMPACT
+# ============================================================================
+# If you scale to 5 nodes:
+#   - Consider changing minAvailable to 3
+#   - Maintains better protection for larger cluster
+#
+# If you scale to 10+ nodes:
+#   - Consider separate master nodes
+#   - Separate master/data node PDBs for different strategies
+#
+# ============================================================================
+# HOW TO VERIFY
+# ============================================================================
+# Check PDB status:
+#   kubectl get poddisruptionbudgets -n elasticsearch
+#
+# Describe PDB:
+#   kubectl describe pdb elasticsearch-pdb -n elasticsearch
+#
+# Disruptions allowed:
+#   kubectl get pdb elasticsearch-pdb -n elasticsearch -o wide
+#
+# ============================================================================
+
