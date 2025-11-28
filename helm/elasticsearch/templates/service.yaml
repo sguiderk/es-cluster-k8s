@@ -12,12 +12,12 @@ spec:
   selector:
     app: elasticsearch
   ports:
-    - name: transport
+    - name: {{ .Values.ports.transportName }}
       port: {{ .Values.service.transportPort }}
-      targetPort: 9300
-    - name: http
+      targetPort: {{ .Values.ports.transport }}
+    - name: {{ .Values.ports.httpName }}
       port: {{ .Values.service.port }}
-      targetPort: 9200
+      targetPort: {{ .Values.ports.http }}
 ---
 apiVersion: v1
 kind: Service
@@ -32,7 +32,7 @@ spec:
   selector:
     app: elasticsearch
   ports:
-    - name: http
+    - name: {{ .Values.ports.httpName }}
       port: {{ .Values.service.port }}
-      targetPort: 9200
-      protocol: TCP
+      targetPort: {{ .Values.ports.http }}
+      protocol: {{ .Values.ports.protocol }}

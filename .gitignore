@@ -1,0 +1,40 @@
+# Kubernetes-generated files
+*.yaml~
+*.json~
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Certificates and secrets (local generation)
+certs/
+*.key
+*.crt
+*.pem
+*.p12
+*.p8
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Environment-specific files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+
+# Dependencies
+node_modules/
+vendor/
+terraform/aws/.terraform/

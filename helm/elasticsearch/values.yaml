@@ -71,6 +71,25 @@ elasticsearch:
     host: "0.0.0.0"
     publishHost: "es-${HOSTNAME##*-}.elasticsearch-headless.elasticsearch.svc.cluster.local"
 
+  shard:
+    allocationTotalShardsPerNode: 10
+
+  indices:
+    memoryIndexBufferSize: 30%
+    recoveryMaxBytesPerSec: 125mb
+
+  threadPool:
+    writeQueueSize: 1000
+
+  transport:
+    connectTimeout: 30s
+    tcpKeepAlive: true
+
+  cluster:
+    nodeConcurrentRecoveries: 2
+
+  actionDestructiveRequiresName: true
+
 ## High Availability
 podDisruptionBudget:
   enabled: true
@@ -96,12 +115,27 @@ rbac:
   create: true
   serviceAccountName: elasticsearch
 
-## Health Checks
+## Ports & Protocols
+ports:
+  http: 9200
+  transport: 9300
+  httpName: http
+  transportName: transport
+  protocol: TCP
+
+## Container Paths
+containerPaths:
+  config: /usr/share/elasticsearch/config/elasticsearch.yml
+  data: /usr/share/elasticsearch/data
+  logs: /usr/share/elasticsearch/logs
+  tmp: /tmp
+
+## Probes
 livenessProbe:
   httpGet:
     path: /_cluster/health
     port: 9200
-    scheme: HTTPS
+    scheme: HTTP
   initialDelaySeconds: 60
   periodSeconds: 30
   timeoutSeconds: 10
@@ -111,11 +145,16 @@ readinessProbe:
   httpGet:
     path: /_cluster/health?local=true
     port: 9200
-    scheme: HTTPS
+    scheme: HTTP
   initialDelaySeconds: 30
   periodSeconds: 10
   timeoutSeconds: 10
   failureThreshold: 3
 
+## Config
+configMapName: elasticsearch-config
+configSubPath: elasticsearch.yml
+
+## Resources
 nodeSelector: {}
 tolerations: []
