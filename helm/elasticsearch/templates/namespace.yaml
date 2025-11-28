@@ -1,3 +1,6 @@
+{{- if eq .Values.namespace "elasticsearch" }}
+# Namespace is pre-created or managed separately
+{{- else }}
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -8,3 +11,4 @@ metadata:
   annotations:
     meta.helm.sh/release-name: {{ .Release.Name }}
     meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+{{- end }}

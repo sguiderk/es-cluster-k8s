@@ -48,10 +48,10 @@ spec:
               - ALL
         
         ports:
-        - name: {{ .Values.ports.httpName }}
-          containerPort: {{ .Values.ports.http }}
-        - name: {{ .Values.ports.transportName }}
-          containerPort: {{ .Values.ports.transport }}
+        - name: http
+          containerPort: 9200
+        - name: transport
+          containerPort: 9300
         
         env:
         - name: HOSTNAME
@@ -63,42 +63,42 @@ spec:
         
         livenessProbe:
           httpGet:
-            path: {{ .Values.livenessProbe.httpGet.path }}
-            port: {{ .Values.livenessProbe.httpGet.port }}
-            scheme: {{ .Values.livenessProbe.httpGet.scheme }}
-          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
-          failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            path: /_cluster/health
+            port: 9200
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
         
         readinessProbe:
           httpGet:
-            path: {{ .Values.readinessProbe.httpGet.path }}
-            port: {{ .Values.readinessProbe.httpGet.port }}
-            scheme: {{ .Values.readinessProbe.httpGet.scheme }}
-          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
-          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
-          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
-          failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            path: /_cluster/health?local=true
+            port: 9200
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3
         resources:
           {{- toYaml .Values.resources | nindent 12 }}
         
         volumeMounts:
         - name: config
-          mountPath: {{ .Values.containerPaths.config }}
-          subPath: {{ .Values.configSubPath }}
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          subPath: elasticsearch.yml
           readOnly: true
         - name: data
-          mountPath: {{ .Values.containerPaths.data }}
+          mountPath: /usr/share/elasticsearch/data
         - name: logs
-          mountPath: {{ .Values.containerPaths.logs }}
+          mountPath: /usr/share/elasticsearch/logs
         - name: tmp
-          mountPath: {{ .Values.containerPaths.tmp }}
+          mountPath: /tmp
       
       volumes:
       - name: config
         configMap:
-          name: {{ .Values.configMapName }}
+          name: elasticsearch-config
       - name: data
         emptyDir:
           sizeLimit: {{ .Values.persistence.size }}

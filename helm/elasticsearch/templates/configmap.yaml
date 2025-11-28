@@ -14,12 +14,18 @@ data:
     node.roles: [{{ .Values.elasticsearch.nodeRoles }}]
     
     # Cluster Discovery
+    {{- if eq .Values.elasticsearch.cluster.discovery.type "single-node" }}
+    discovery.type: single-node
+    {{- else }}
     discovery.seed_hosts:
       - elasticsearch-headless.{{ .Values.namespace }}.svc.cluster.local
+    {{- if .Values.elasticsearch.cluster.initialMasterNodes }}
     cluster.initial_master_nodes:
-      - es-0
-      - es-1
-      - es-2
+    {{- range .Values.elasticsearch.cluster.initialMasterNodes }}
+      - {{ . }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
     
     # Network
     network.host: 0.0.0.0
@@ -28,7 +34,7 @@ data:
     transport.publish_host: ${HOSTNAME}.elasticsearch-headless.{{ .Values.namespace }}.svc.cluster.local
     
     # Shard Allocation
-    cluster.routing.allocation.total_shards_per_node: {{ .Values.elasticsearch.shard.allocationTotalShardsPerNode }}
+    cluster.routing.allocation.total_shards_per_node: 10
     
     # Security (Disabled for dev/test)
     xpack.security.enabled: false
@@ -38,12 +44,12 @@ data:
     path.logs: /usr/share/elasticsearch/logs
     
     # Performance
-    indices.memory.index_buffer_size: {{ .Values.elasticsearch.indices.memoryIndexBufferSize }}
-    thread_pool.write.queue_size: {{ .Values.elasticsearch.threadPool.writeQueueSize }}
-    transport.connect_timeout: {{ .Values.elasticsearch.transport.connectTimeout }}
-    transport.tcp.keep_alive: {{ .Values.elasticsearch.transport.tcpKeepAlive }}
+    indices.memory.index_buffer_size: 30%
+    thread_pool.write.queue_size: 1000
+    transport.connect_timeout: 30s
+    transport.tcp.keep_alive: true
     
     # Recovery & Resilience
-    action.destructive_requires_name: {{ .Values.elasticsearch.actionDestructiveRequiresName }}
-    indices.recovery.max_bytes_per_sec: {{ .Values.elasticsearch.indices.recoveryMaxBytesPerSec }}
-    cluster.routing.allocation.node_concurrent_recoveries: {{ .Values.elasticsearch.cluster.nodeConcurrentRecoveries }}
+    action.destructive_requires_name: true
+    indices.recovery.max_bytes_per_sec: 125mb
+    cluster.routing.allocation.node_concurrent_recoveries: 2
