@@ -1,56 +1,38 @@
-
 apiVersion: v1
 kind: Service
-
 metadata:
-  name: es-discovery
-  namespace: elasticsearch
-  
+  name: elasticsearch-headless
+  namespace: {{ .Values.namespace }}
   labels:
     app: elasticsearch
-    component: discovery
-    service-type: headless
-
+    managed-by: helm
 spec:
-
   clusterIP: None
-  
-
+  publishNotReadyAddresses: true
   selector:
     app: elasticsearch
-  
-  # Cluster node-to-node communication
   ports:
     - name: transport
-      port: 9300
+      port: {{ .Values.service.transportPort }}
       targetPort: 9300
-      protocol: TCP
-
-
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: 9200
+---
 apiVersion: v1
 kind: Service
-
 metadata:
   name: elasticsearch
-  namespace: elasticsearch
-  
+  namespace: {{ .Values.namespace }}
   labels:
     app: elasticsearch
-    component: api
-    service-type: client-access
-
+    managed-by: helm
 spec:
-
-  type: ClusterIP
-
+  type: {{ .Values.service.type }}
   selector:
     app: elasticsearch
-  
-  # HTTP API access for clients and queries
   ports:
     - name: http
-      port: 9200
+      port: {{ .Values.service.port }}
       targetPort: 9200
       protocol: TCP
-
-

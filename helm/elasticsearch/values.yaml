@@ -1,0 +1,121 @@
+# Elasticsearch Helm Chart Configuration
+
+## Cluster
+replicaCount: 3
+
+image:
+  repository: docker.elastic.co/elasticsearch/elasticsearch
+  pullPolicy: IfNotPresent
+  tag: "8.11.0"
+
+## Pod Security
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+## Resources
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+## Storage (using emptyDir for dev/test - no PVC needed)
+persistence:
+  enabled: false
+  storageClass: ""
+  size: 30Gi
+  mountPath: /usr/share/elasticsearch/data
+
+## Service
+service:
+  type: ClusterIP
+  port: 9200
+  transportPort: 9300
+
+## Elasticsearch Configuration
+elasticsearch:
+  security:
+    enabled: true
+    elasticPassword: ""
+    transportPassphrase: ""
+    httpPassphrase: ""
+
+  cluster:
+    name: elasticsearch
+    initialMasterNodes:
+      - es-0
+      - es-1
+      - es-2
+    minMasterNodes: 2
+    maxLocalStorageNodes: 1
+
+  nodeRoles: "master,data,ingest,ml"
+
+  jvm:
+    heapSize: 2g
+
+  network:
+    host: "0.0.0.0"
+    publishHost: "es-${HOSTNAME##*-}.elasticsearch-headless.elasticsearch.svc.cluster.local"
+
+## High Availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - elasticsearch
+          topologyKey: kubernetes.io/hostname
+
+## Deployment
+namespace: elasticsearch
+
+rbac:
+  create: true
+  serviceAccountName: elasticsearch
+
+## Health Checks
+livenessProbe:
+  httpGet:
+    path: /_cluster/health
+    port: 9200
+    scheme: HTTPS
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /_cluster/health?local=true
+    port: 9200
+    scheme: HTTPS
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+nodeSelector: {}
+tolerations: []

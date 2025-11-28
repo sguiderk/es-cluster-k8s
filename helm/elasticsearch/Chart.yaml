@@ -1,0 +1,15 @@
+apiVersion: v2
+name: elasticsearch
+description: Production-ready Elasticsearch cluster on Kubernetes
+type: application
+version: 1.0.0
+appVersion: "8.x"
+keywords:
+  - elasticsearch
+  - search
+  - logging
+  - kubernetes
+maintainers:
+  - name: Platform Team
+    email: platform@company.com
+dependencies: []
